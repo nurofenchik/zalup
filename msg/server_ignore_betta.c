@@ -39,6 +39,28 @@ static int ensure_key_file(void)
     return 0;
 }
 
+static int append_alpha_to_file(const AlphaMessage *alpha)
+{
+    FILE *f = fopen(ALPHA_LOG_FILE, "a");
+    if (f == NULL) {
+        perror("Server: fopen alpha log file");
+        return -1;
+    }
+
+    if (fprintf(f, "%s\n", alpha->mtext) < 0) {
+        perror("Server: fprintf alpha log file");
+        fclose(f);
+        return -1;
+    }
+
+    if (fclose(f) != 0) {
+        perror("Server: fclose alpha log file");
+        return -1;
+    }
+
+    return 0;
+}
+
 int main(void)
 {
     AlphaMessage alpha;
@@ -75,6 +97,10 @@ int main(void)
         }
 
         printf("Server: received ALPHA: %s\n", alpha.mtext);
+
+        if (append_alpha_to_file(&alpha) < 0) {
+            cleanup_and_exit(1);
+        }
 
         /* BETTA is intentionally ignored: server does not send it. */
     }
